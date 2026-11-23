@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ur-Latn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebP Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: practical, confident utility — a darkroom tool that just works.
+   IDEA: a photo lab's contact sheet: originals go in, developed prints come out with their stats stamped on.
+   PICTURE: the big drop tray itself, then the contact sheet of results.
+   COLOUR and TYPE: cobalt field, paper white, coral accent; Archivo display + Inter.
+   LAYOUT: modest title, tray full width, settings row, results grid; stacks on phones. */
+:root{color-scheme:light dark;
+  --bg:light-dark(#f4f5fb,#0e1124);--paper:light-dark(#ffffff,#171b36);--ink:light-dark(#11142b,#eef0ff);
+  --mute:light-dark(#5a5f7d,#a3a8cc);--line:light-dark(#dfe2f0,#2a2f55);
+  --cobalt:#2340d8;--cobalt2:light-dark(#1a31b0,#3d5bff);--coral:#ff5a3c;--ok:light-dark(#127a4a,#4fd39a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.big{font-family:Archivo,Inter,sans-serif}
+.top{background:var(--cobalt);color:#fff;padding:clamp(24px,4vw,44px) max(5vw,16px) clamp(70px,9vw,110px)}
+.top h1{margin:0;font-size:clamp(32px,5vw,48px);line-height:1.05;font-weight:800;text-wrap:balance}
+.top p{margin:10px 0 0;max-width:62ch;color:#dfe5ff;font-size:16px}
+.wrap{max-width:1240px;margin:0 auto}
+main{padding:0 max(5vw,16px) 64px}
+.tray{margin-top:clamp(-90px,-7vw,-50px);background:var(--paper);border-radius:22px;box-shadow:0 18px 50px -20px rgba(10,20,90,.45);padding:clamp(16px,2.5vw,28px)}
+.drop{position:relative;border:2.5px dashed var(--line);border-radius:16px;min-height:clamp(220px,30vw,320px);display:grid;place-items:center;text-align:center;padding:24px;cursor:pointer;transition:border-color .2s,background .2s}
+.drop:hover,.drop.on{border-color:var(--cobalt2);background:light-dark(#eef1ff,#1c2250)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop svg{width:clamp(110px,14vw,150px);height:auto;display:block;margin:0 auto 14px}
+.drop .big{font-size:clamp(22px,3vw,30px);font-weight:700;line-height:1.15;margin:0}
+.drop .sub{color:var(--mute);margin:6px 0 0;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.chip{font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;background:light-dark(#eef1ff,#232a5e);color:var(--cobalt2)}
+.set{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px 22px;margin-top:20px;align-items:end}
+.set label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.set .v{float:right;color:var(--cobalt2);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--cobalt2);height:28px}
+select,input[type=number]{width:100%;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);min-height:44px}
+button{font:600 15px Inter,sans-serif;min-height:44px;padding:0 18px;border-radius:11px;border:0;cursor:pointer;background:var(--cobalt2);color:#fff}
+button.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:34px 0 14px}
+.bar h2{margin:0;font-size:24px;line-height:1.1}
+.bar .sum{color:var(--mute);font-size:15px}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:18px}
+.card{background:var(--paper);border-radius:16px;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column}
+.ph{aspect-ratio:4/3;background:repeating-conic-gradient(light-dark(#eceef6,#20254a) 0 25%,transparent 0 50%) 0 0/18px 18px;display:grid;place-items:center;position:relative;cursor:zoom-in}
+.ph img{width:100%;height:100%;object-fit:contain}
+.ph .busy{position:absolute;inset:0;display:grid;place-items:center;background:light-dark(rgba(255,255,255,.75),rgba(14,17,36,.75));font-weight:600;font-size:14px}
+.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--cobalt2);border-radius:50%;animation:s 0.8s linear infinite;margin:0 auto 8px}
+@keyframes s{to{transform:rotate(1turn)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+.meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.nm{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sz{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.sz .from{color:var(--mute);text-decoration:line-through;font-size:14px;white-space:nowrap}
+.sz .to{font-family:Archivo,sans-serif;font-weight:800;font-size:22px;white-space:nowrap}
+.sz .pct{font-size:13px;font-weight:700;color:var(--ok);white-space:nowrap}
+.tags{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--mute)}
+.tags span{white-space:nowrap}
+.warn{font-size:13px;color:var(--coral);font-weight:600}
+.card .dl{margin-top:auto}
+.empty{color:var(--mute);text-align:center;padding:34px 16px;border:1.5px dashed var(--line);border-radius:16px}
+.note{color:var(--mute);font-size:14px;margin-top:26px;max-width:75ch}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw}
+.toast.show{opacity:1}
+.cmp{position:fixed;inset:0;background:rgba(6,8,22,.88);display:none;flex-direction:column;z-index:9;padding:16px}
+.cmp.open{display:flex}
+.cmp .hd{display:flex;justify-content:space-between;align-items:center;color:#fff;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:14px}
+.stage{position:relative;flex:1;overflow:hidden;border-radius:12px;background:#111}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.stage .a{clip-path:inset(0 calc(100% - var(--x,50%)) 0 0)}
+.stage .line{position:absolute;top:0;bottom:0;left:var(--x,50%);width:3px;background:#fff;transform:translateX(-50%);pointer-events:none}
+.stage .lb{position:absolute;top:10px;padding:3px 9px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:600}
+.cmp input[type=range]{margin-top:10px}
+@media(max-width:600px){.bar{margin-top:26px}.acts{width:100%}.acts button{flex:1}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <h1>Koi bhi image, WebP mein — 100&nbsp;KB ke andar</h1>
+  <p>HEIC, JPG, PNG, GIF, BMP ya WebP daalein. Tool har image ke liye sab se zyada quality dhoondta hai jo aap ki size limit mein fit ho. Sab kuch aap ke browser mein hota hai — koi upload nahi.</p>
+</div></header>
+
+<main><div class="wrap">
+  <section class="tray">
+    <div class="drop" id="drop">
+      <input type="file" id="file" multiple accept="image/*,.heic,.heif,.HEIC,.HEIF" aria-label="Images chunein">
+      <div>
+        <svg viewBox="0 0 160 120" aria-hidden="true">
+          <rect x="18" y="20" width="96" height="76" rx="8" fill="#ff5a3c" opacity=".25" transform="rotate(-8 66 58)"/>
+          <rect x="34" y="16" width="100" height="80" rx="9" fill="#2340d8"/>
+          <rect x="42" y="24" width="84" height="56" rx="5" fill="#fff"/>
+          <circle cx="104" cy="40" r="8" fill="#ff5a3c"/>
+          <path d="M44 78l22-26 16 18 10-10 32 18z" fill="#2340d8" opacity=".85"/>
+          <circle cx="132" cy="92" r="18" fill="#ff5a3c"/>
+          <path d="M132 83v18m-7-7l7 7 7-7" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="big">Images yahan drop karein</p>
+        <p class="sub">ya click kar ke chunein — ek saath kai images bhi</p>
+        <div class="chips"><span class="chip">HEIC</span><span class="chip">JPG</span><span class="chip">PNG</span><span class="chip">GIF</span><span class="chip">BMP</span><span class="chip">WebP</span></div>
+      </div>
+    </div>
+
+    <div class="set">
+      <div><label for="target">Size limit <span class="v" id="targetV">100 KB</span></label>
+        <input type="range" id="target" min="20" max="500" step="5" value="100"></div>
+      <div><label for="minq">Kam se kam quality <span class="v" id="minqV">75%</span></label>
+        <input type="range" id="minq" min="50" max="92" step="1" value="75"></div>
+      <div><label for="maxside">Max lambai/chaurai</label>
+        <select id="maxside">
+          <option value="0">Auto (sirf zaroorat pe chhota)</option>
+          <option value="3840">3840 px (4K)</option>
+          <option value="2560">2560 px</option>
+          <option value="1920" selected>1920 px (Full HD)</option>
+          <option value="1280">1280 px</option>
+          <option value="1080">1080 px (social media)</option>
+        </select></div>
+      <div><button class="ghost" id="redo" disabled>Nayi settings se dobara karein</button></div>
+    </div>
+  </section>
+
+  <div class="bar">
+    <div><h2>Converted images</h2><div class="sum" id="sum">Abhi koi image nahi.</div></div>
+    <div class="acts">
+      <button id="all" disabled>Sab download (ZIP)</button>
+      <button class="ghost" id="clear" disabled>Saaf karein</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">Converted images yahan dikhengi. Kisi bhi image pe click karein to original aur WebP ka muqabla slider se dekh sakte hain.</div>
+
+  <p class="note">Kaise kaam karta hai: pehle image ko poori resolution pe sab se oonchi quality par try kiya jata hai; agar size zyada ho to quality ko binary search se itna adjust kiya jata hai ke limit mein fit ho. Agar "kam se kam quality" par bhi fit na ho, tab hi resolution thori kam ki jati hai — is tarah tasveer dhundli ya blocky nahi hoti. Bohat bari photos (jaise 12 MP phone camera) ke liye 1920 px aur 100 KB ek acha balance hai. Safari mein WebP encoding support nahi — Chrome, Edge ya Firefox istemal karein.</p>
+</div></main>
+
+<div class="cmp" id="cmp" role="dialog" aria-modal="true" aria-label="Muqabla">
+  <div class="hd"><span id="cmpT"></span><button class="ghost" id="cmpX" style="color:#fff;border-color:#fff6">Band karein</button></div>
+  <div class="stage" id="stage"><img class="b" id="cmpB" alt="WebP"><img class="a" id="cmpA" alt="Original"><div class="line"></div><span class="lb" style="left:10px">Original</span><span class="lb" style="right:10px">WebP</span></div>
+  <input type="range" id="cmpR" min="0" max="100" value="50" aria-label="Muqabla slider">
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+const items=[];let dl=null;let queue=Promise.resolve();
+const fmt=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(b<10240?1:0)+' KB':(b/1048576).toFixed(2)+' MB';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2600)};
+const opts=()=>({target:+$('target').value*1024,minQ:+$('minq').value/100,maxSide:+$('maxside').value});
+
+$('target').oninput=e=>$('targetV').textContent=e.target.value+' KB';
+$('minq').oninput=e=>$('minqV').textContent=e.target.value+'%';
+
+let webpOK=null;
+function checkWebp(){if(webpOK===null){const c=document.createElement('canvas');c.width=c.height=1;webpOK=c.toDataURL('image/webp').startsWith('data:image/webp')}return webpOK}
+
+// Modern libheif decoder (supports new iPhone HEIC); CSP-safe build, loaded only when needed
+let heicMod=null,oldHeic=null;
+function loadHeic(){if(!heicMod)heicMod=import('https://cdn.jsdelivr.net/npm/heic-to@1.6.7/dist/csp/heic-to.min.js').catch(e=>{heicMod=null;throw new Error('HEIC decoder load nahi hua — internet check karein')});return heicMod}
+function loadOldHeic(){if(!oldHeic)oldHeic=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';s.onload=()=>res(window.heic2any);s.onerror=()=>{oldHeic=null;rej(new Error('HEIC decoder load nahi hua'))};document.head.appendChild(s)});return oldHeic}
+const isHeicName=f=>/hei[cf]/i.test(f.type)||/\.(heic|heif)$/i.test(f.name);
+async function isHeicBytes(f){try{const b=new TextDecoder().decode(await f.slice(8,12).arrayBuffer()).replace(/\0/g,'').trim();return['mif1','msf1','heic','heix','hevc','hevx','heim','heis'].includes(b)}catch(e){return false}}
+const isHeic=isHeicName;
+const errMsg=e=>typeof e==='string'?e:(e&&(e.message||e.error))||'Ye image parhi nahi ja saki';
+
+async function decodeHeic(file){
+  let first;
+  try{const m=await loadHeic();return await m.heicTo({blob:file,type:'bitmap'})}catch(e){first=e}
+  try{const h=await loadOldHeic();let out=await h({blob:file,toType:'image/png'});if(Array.isArray(out))out=out[0];return await createImageBitmap(out)}
+  catch(e){throw new Error('HEIC decode nahi hui: '+errMsg(first))}
+}
+
+async function decode(file){
+  const heic=isHeicName(file)||await isHeicBytes(file);
+  try{return await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){}
+  if(heic)return await decodeHeic(file);
+  const url=URL.createObjectURL(file);
+  try{const im=new Image();im.src=url;await im.decode();return await createImageBitmap(im)}
+  finally{URL.revokeObjectURL(url)}
+}
+
+const cv=document.createElement('canvas');const cx=cv.getContext('2d');
+function draw(bmp,w,h){cv.width=w;cv.height=h;cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+  // step-down for big reductions keeps fine detail crisp
+  let src=bmp,sw=bmp.width,sh=bmp.height;
+  while(sw/2>w*1.1){const t=document.createElement('canvas');t.width=Math.round(sw/2);t.height=Math.round(sh/2);const tc=t.getContext('2d');tc.imageSmoothingQuality='high';tc.drawImage(src,0,0,t.width,t.height);src=t;sw=t.width;sh=t.height}
+  cx.clearRect(0,0,w,h);cx.drawImage(src,0,0,w,h)}
+const enc=q=>new Promise((r,j)=>cv.toBlob(b=>b?r(b):j(new Error('Encode fail')),'image/webp',q));
+
+async function compress(bmp,{target,minQ,maxSide}){
+  const W=bmp.width,H=bmp.height;let scale=1;
+  if(maxSide&&Math.max(W,H)>maxSide)scale=maxSide/Math.max(W,H);
+  let best=null;
+  for(let round=0;round<14;round++){
+    const w=Math.max(1,Math.round(W*scale)),h=Math.max(1,Math.round(H*scale));
+    draw(bmp,w,h);
+    const top=await enc(0.95);
+    if(top.size<=target)return{blob:top,q:0.95,w,h};
+    let lo=minQ,hi=0.95,fit=null;
+    const low=await enc(lo);
+    if(low.size<=target){fit={blob:low,q:lo};
+      for(let i=0;i<7;i++){const m=(lo+hi)/2,b=await enc(m);if(b.size<=target){fit={blob:b,q:m};lo=m}else hi=m}
+      return{...fit,w,h}}
+    best={blob:low,q:lo,w,h};
+    const f=Math.sqrt(target/low.size)*0.97;
+    scale*=Math.min(0.92,Math.max(0.5,f));
+    if(w<16||h<16)break;
+  }
+  // last resort: lowest quality at smallest size
+  let q=minQ;while(q>0.3&&best.blob.size>target){q-=0.08;const b=await enc(q);best={blob:b,q,w:cv.width,h:cv.height}}
+  best.forced=true;return best;
+}
+
+function addFiles(list){
+  const fs=[...list].filter(f=>f.type.startsWith('image/')||isHeic(f)||/\.(jpe?g|png|gif|bmp|webp|avif|tiff?)$/i.test(f.name));
+  if(!fs.length){toast('Koi image file nahi mili');return}
+  if(!checkWebp()){toast('Ye browser WebP nahi bana sakta — Chrome, Edge ya Firefox kholein');return}
+  $('empty').style.display='none';
+  for(const f of fs){const it={id:Math.random().toString(36).slice(2),file:f,name:f.name.replace(/\.[^.]+$/,'')+'.webp'};items.push(it);render(it);queue=queue.then(()=>run(it))}
+  sync();
+}
+
+async function run(it){
+  it.busy=true;it.err=null;paint(it);
+  try{
+    if(!it.bmp)it.bmp=await decode(it.file);
+    if(!it.orig){it.orig=URL.createObjectURL(it.file);if(isHeicName(it.file)||await isHeicBytes(it.file)){draw(it.bmp,it.bmp.width,it.bmp.height);it.orig=URL.createObjectURL(await new Promise(r=>cv.toBlob(r,'image/png')))}}
+    const r=await compress(it.bmp,opts());
+    if(it.url)URL.revokeObjectURL(it.url);
+    Object.assign(it,r,{url:URL.createObjectURL(r.blob)});
+  }catch(e){it.err=errMsg(e)}
+  it.busy=false;paint(it);sync();
+}
+
+function render(it){const d=document.createElement('article');d.className='card';d.id='c'+it.id;$('grid').appendChild(d);paint(it)}
+function paint(it){
+  const d=$('c'+it.id);if(!d)return;
+  const busy=it.busy?'<div class="busy"><div><div class="spin"></div>Convert ho raha hai…</div></div>':'';
+  if(it.err){d.innerHTML=`<div class="ph">${busy}</div><div class="meta"><div class="nm">${esc(it.file.name)}</div><div class="warn">${esc(it.err)}</div></div>`;return}
+  if(!it.blob){d.innerHTML=`<div class="ph">${busy||'<div class="busy"><div><div class="spin"></div>Line mein…</div></div>'}</div><div class="meta"><div class="nm">${esc(it.file.name)}</div><div class="tags"><span>${fmt(it.file.size)}</span></div></div>`;return}
+  const saved=Math.round((1-it.blob.size/it.file.size)*100);
+  const ow=it.bmp.width,oh=it.bmp.height,resized=it.w!==ow;
+  d.innerHTML=`<div class="ph" data-cmp="${it.id}" title="Muqabla dekhein"><img src="${it.url}" alt="${esc(it.name)}">${busy}</div>
+  <div class="meta"><div class="nm" title="${esc(it.name)}">${esc(it.name)}</div>
+  <div class="sz"><span class="from">${fmt(it.file.size)}</span><span class="to">${fmt(it.blob.size)}</span>${saved>0?`<span class="pct">−${saved}%</span>`:''}</div>
+  <div class="tags"><span>Quality ${Math.round(it.q*100)}%</span><span>·</span><span>${it.w}×${it.h}px</span>${resized?`<span>(asal ${ow}×${oh})</span>`:''}</div>
+  ${it.forced?'<div class="warn">Limit mein laane ke liye quality kam karni pari — size limit barha dein ya resolution kam karein.</div>':''}
+  <button class="dl" data-dl="${it.id}">WebP download karein</button></div>`;
+}
+
+function sync(){
+  const done=items.filter(i=>i.blob&&!i.busy);
+  $('all').disabled=done.length<1;$('clear').disabled=!items.length;$('redo').disabled=!items.length;
+  if(!items.length){$('sum').textContent='Abhi koi image nahi.';$('empty').style.display='';return}
+  const a=done.reduce((s,i)=>s+i.file.size,0),b=done.reduce((s,i)=>s+i.blob.size,0);
+  $('sum').textContent=`${done.length}/${items.length} tayyar`+(done.length?` · ${fmt(a)} → ${fmt(b)}`:'');
+}
+
+async function save(filename,data){
+  if(!window.claude){ // normal website (e.g. Vercel): direct browser download
+    const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data]));const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return}
+  if(!dl){toast('Download yahan available nahi — image pe right-click/long-press kar ke "Save image" karein');return}
+  try{await dl.save({filename,data});toast('Save ho gaya')}
+  catch(e){if(e&&e.code==='declined')return;if(e&&e.code==='rate_limited'){toast('Ek save pehle se khula hai — thora ruk kar dobara');return}toast('Download nahi ho saka')}
+}
+
+const drop=$('drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on')}));
+drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
+$('file').onchange=e=>{addFiles(e.target.files);e.target.value=''};
+document.addEventListener('paste',e=>{const fs=[...(e.clipboardData?.files||[])];if(fs.length)addFiles(fs)});
+
+$('grid').onclick=e=>{
+  const b=e.target.closest('[data-dl]');if(b){const it=items.find(i=>i.id===b.dataset.dl);if(it)save(it.name,it.blob);return}
+  const p=e.target.closest('[data-cmp]');if(p){const it=items.find(i=>i.id===p.dataset.cmp);if(it)openCmp(it)}
+};
+$('all').onclick=async()=>{
+  const done=items.filter(i=>i.blob&&!i.busy);if(!done.length)return;
+  if(done.length===1){save(done[0].name,done[0].blob);return}
+  if(!window.JSZip){toast('ZIP tool load nahi hua — har image alag download karein');return}
+  const z=new JSZip(),used={};
+  for(const i of done){let n=i.name;if(used[n]){n=n.replace(/\.webp$/,`-${++used[n]}.webp`)}else used[n]=1;z.file(n,i.blob)}
+  $('all').disabled=true;$('all').textContent='ZIP ban rahi hai…';
+  try{const blob=await z.generateAsync({type:'blob',compression:'STORE'});await save('webp-images.zip',blob)}
+  finally{$('all').textContent='Sab download (ZIP)';sync()}
+};
+$('clear').onclick=()=>{for(const i of items){i.url&&URL.revokeObjectURL(i.url);i.orig&&URL.revokeObjectURL(i.orig);i.bmp&&i.bmp.close&&i.bmp.close()}items.length=0;$('grid').innerHTML='';sync()};
+$('redo').onclick=()=>{for(const it of items){if(it.bmp||it.err){it.blob=null;paint(it);queue=queue.then(()=>run(it))}}sync()};
+
+function openCmp(it){$('cmpA').src=it.orig||it.url;$('cmpB').src=it.url;$('cmpT').textContent=`${it.file.name}: ${fmt(it.file.size)} → ${fmt(it.blob.size)} WebP (quality ${Math.round(it.q*100)}%)`;$('cmpR').value=50;$('stage').style.setProperty('--x','50%');$('cmp').classList.add('open');$('cmpX').focus()}
+const closeCmp=()=>$('cmp').classList.remove('open');
+$('cmpX').onclick=closeCmp;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCmp()});
+$('cmpR').oninput=e=>$('stage').style.setProperty('--x',e.target.value+'%');
+$('stage').addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='mouse'){const r=e.currentTarget.getBoundingClientRect();const x=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));$('stage').style.setProperty('--x',x+'%');$('cmpR').value=x}});
+
+(async()=>{try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads')}catch(e){dl=null}})();
+}
+</script>
+</body>
+</html>
